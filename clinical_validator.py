@@ -1,9 +1,8 @@
-"""Scores clinical transcripts for contradictions instead of rejecting them.
+"""Scores clinical transcripts for contradictions.
 
-Rules fire against speech-to-text output, which is noisy, so each one costs
-confidence rather than failing the transcript outright. Negated and
-hypothetical phrasing suppresses a hit. Length and clinical term density
-give confidence back.
+Speech-to-text output is noisy, so each rule costs confidence and none of
+them fails the transcript on its own. A negating or hypothetical phrase near
+the hit drops it. Length and clinical term density add confidence back.
 """
 
 from __future__ import annotations
@@ -39,8 +38,8 @@ RULES: List[Tuple[str, Optional[str], str, str]] = [
      "nil by mouth with recorded oral intake"),
     (r"\banuric\b", r"\burine output of \d", "MEDIUM",
      "anuria with a measured urine output"),
-    # Units attach to the wrong observation often: spoken units are short and
-    # sound alike.
+    # Spoken units are short and sound alike, so ASR attaches them to the
+    # wrong observation often.
     (r"\btemperature\s*:?\s*[\d.]+\s*mm\s?hg\b", None, "UNIT",
      "temperature in mmHg"),
     (r"\b(blood pressure|bp)\s*:?\s*[\d/]+\s*(°|degrees?)\s*[cf]\b", None, "UNIT",
@@ -64,7 +63,7 @@ HEDGES = re.compile(
     IGNORE_CASE,
 )
 
-# Density signal, not a terminology whitelist.
+# Density signal only. Keep it short.
 CLINICAL_TERMS = re.compile(
     r"\b(patient|history|examination|diagnosis|assessment|plan|medication|"
     r"dose|mg|ml|allergy|observation|referral|follow[- ]up|vitals|"

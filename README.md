@@ -12,22 +12,22 @@ if not result.accepted(threshold=0.7):
     queue_for_human_review(transcript, result.findings)
 ```
 
-## Why scoring and not rejecting
+## Why the score
 
-ASR mishears. An LLM asked to summarise the result will summarise the mistake faithfully, so a note can reach a provider asserting something untrue of any patient: a deceased patient who is ambulatory, a benign lesion that metastasised, a temperature in mmHg.
+ASR mishears. Ask an LLM to summarise the result and it summarises the mistake, so a note can reach a provider claiming a deceased patient walked to the ward, or a temperature of 120 mmHg.
 
-A rule that rejects on string match does not survive contact with real transcripts. Clinicians constantly write about findings they are excluding, and "afebrile, negative for fever" contains both halves of a contradiction while being a correct note. A boolean checker floods the review queue with those and gets turned off inside a week.
+Reject on string match and you drown your reviewers. Clinicians write about findings they are excluding all day, and "afebrile, negative for fever" holds both halves of a contradiction while being a correct note. Your reviewers clear a few dozen of those and turn the checker off inside a week.
 
-So every rule costs confidence instead of failing the transcript:
+Every rule here costs confidence instead of failing the transcript.
 
-A contradiction subtracts a weighted penalty by severity. One CRITICAL sinks a transcript alone, two MEDIUMs do not.
+A contradiction subtracts a penalty weighted by severity. One CRITICAL sinks a transcript on its own, two MEDIUMs leave it standing.
 
-A hit is checked against 100 characters either side for negating or hypothetical phrasing (`denies`, `ruled out`, `history of`, `if`). Hedged discussion of a contradiction is not an assertion of one.
+The checker then reads 100 characters either side of the hit for negating or hypothetical phrasing (`denies`, `ruled out`, `history of`, `if`). A clinician ruling something out has asserted nothing, so the hit drops.
 
-Length and clinical term density add confidence back. A long dense transcript with one MEDIUM hit is a different risk from a short garbled one.
+Length and clinical term density add confidence back. A long dense transcript with one MEDIUM hit carries different risk from a short garbled one.
 
-`validate()` returns the score. The caller picks the threshold and sends only what falls below it to human review, so the guard tightens without a code change.
+`validate()` hands back the score. You pick the threshold and send only what falls below it to human review, which lets you tighten the guard without a code change.
 
 ## Scope
 
-Eleven rules, enough to show the mechanism. A real deployment swaps the list for a terminology-backed source (ICD-10, UMLS) and tunes the weights against reviewer decisions. Rules are data, so that swap does not touch the scoring.
+Eleven rules, enough to show the mechanism. For a real deployment you swap the list for a terminology-backed source such as ICD-10 or UMLS, then tune the weights against your reviewers' decisions. Rules are data, so that swap leaves the scoring alone.
